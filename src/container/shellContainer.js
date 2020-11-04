@@ -23,55 +23,52 @@ class ShellContainer extends PureComponent {
     contextValue: null
   };
 
-  componentDidUpdate(prevProps, prevState) {
-    // console.log({ prevProps });
-    // console.log("props", this.props);
-    // console.log({ prevState });
-    // console.log("state", this.state);
-  }
-
   Step2Comp = (props) => {
     const { contextState } = props;
     const { contextValue, setOnce } = this.state;
-    if (
-      contextValue &&
-      (contextState.name !== contextValue.name ||
-        contextState.name1 !== contextValue.name1) &&
-      setOnce
-    ) {
-      this.setState({ contextValue: contextState });
-    }
-    if (!contextValue && !setOnce) {
-      this.setState({ contextValue: contextState, setOnce: true });
-    }
+    this.setState({ contextValue: contextState });
+    // if (
+    //   contextValue &&
+    //   (contextState.name !== contextValue.name ||
+    //     contextState.name1 !== contextValue.name1) &&
+    //   setOnce
+    // ) {
+    //   this.setState({ contextValue: contextState });
+    // }
+    // if (!contextValue && !setOnce) {
+    //   this.setState({ contextValue: contextState, setOnce: true });
+    // }
     return null;
-    // return (
-    //   <div>
-    //     {contextValue && (
-    //       <h4>
-    //         Inside Shell Provider <br /> ContextValue via stateObject:{" "}
-    //         {contextValue.name || "Empty"}
-    //       </h4>
-    //     )}
-    //   </div>
-    // );
   };
 
   WrapWithShellContext = withHooksHOC(this.Step2Comp);
 
+  emittedValue = (inputValue, dispatch) => {
+    this.setState({ dispatch: dispatch, contextValue: inputValue });
+  };
+
   render() {
     const { contextValue } = this.state;
-    console.log("Render", contextValue);
+    console.log("render ShellContainer", contextValue);
     return (
       <div style={{ border: "1px solid red", padding: "5px" }}>
-        <Shell data={{ name: "john doe", name1: "Jane doe" }}>
+        <Shell
+          value={contextValue || null}
+          campaignData={{ name: "john doe", name1: "jane doe" }}
+          onChange={(e) => this.emittedValue(e)}
+          showError={false}
+        >
           <Shell.Group>
             <h4>This is Shell Group</h4>
-            <Shell.CtrlInput />
+            <Shell.CtrlInput 
+              name={contextValue ? contextValue.name : ""} 
+              onChange={() => {}}
+            />
             <Shell.CtrlInputOne />
             <WrappedContextValueLabel />
           </Shell.Group>
-          {this.WrapWithShellContext()}
+          <Shell.Group>Render Once</Shell.Group>
+          {/* {this.WrapWithShellContext()} */}
         </Shell>
         <div style={{ border: "1px solid red", padding: "5px" }}>
           <h4>Step 2 component</h4>

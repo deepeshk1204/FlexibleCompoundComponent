@@ -1,4 +1,11 @@
-import React, { useContext, useEffect, useState, useReducer } from "react";
+import React, {
+  useContext,
+  useCallback,
+  useEffect,
+  useState,
+  useReducer,
+  useMemo
+} from "react";
 import styled from "@emotion/styled";
 import { Input } from "antd";
 
@@ -14,38 +21,14 @@ const CardContainer = styled.div`
     1px 4px 6px rgba(235, 239, 248, 0.1);
 `;
 
-/**
- *
- * @param {*} param0
- * <ShellMain value={}, onChange=() => {}>
- *  XYZ...
- * </ShellMain>
- */
-export const ShellMain = ({ props, children }) => {
-  const [contextValue] = useState(props);
-  useEffect(() => {}, [contextValue]);
-  const getContextValue = () => contextValue;
-  return (
-    <ShellContext.Provider
-      value={{
-        props,
-        getContextValue
-      }}
-    >
-      <ShellContext.Consumer>
-        {(value) => {
-          console.log("ShellMain inside consumer", value);
-          return children;
-        }}
-      </ShellContext.Consumer>
-    </ShellContext.Provider>
-  );
-};
-
-const Shell = ({ data, children }) => {
-  const parsedData = {
-    ...data
-  };
+const Shell = ({ value, onChange, campaignData, children }) => {
+  const parsedData = !value
+    ? {
+        ...campaignData
+      }
+    : {
+        ...value
+      };
   const reducer = (state, action) => {
     switch (action.type) {
       case "update":
@@ -60,53 +43,80 @@ const Shell = ({ data, children }) => {
   };
 
   const [contextState, dispatch] = useReducer(reducer, parsedData);
-  const value = { contextState, dispatch };
+  const props = { contextState, dispatch };
+  onChange(contextState);
   return (
-    <ShellContext.Provider value={value}>{children}</ShellContext.Provider>
+    <ShellContext.Provider value={props}>{children}</ShellContext.Provider>
   );
 };
 
-Shell.Group = (props) => {
+Shell.Group = React.memo((props) => {
   const { children } = props;
+  console.log("Render Shell.Group");
   return <CardContainer>{children}</CardContainer>;
-};
+});
 
 const CtrlInput = () => {
   const { contextState, dispatch } = useContext(ShellContext);
-  const updateName = (data) => {
+  const { name } = contextState;
+  const updateName = useCallback((data) => {
     dispatch({
       type: "update",
       payload: {
+        error: "",
         field: "name",
         data
       }
     });
-  };
-  return (
-    <CardContainer>
-      <label>This is controlled input</label>
-      <br />
-      <Input
-        onChange={(e) => updateName(e.target.value)}
-        value={contextState.name}
-      />
-    </CardContainer>
-  );
+  }, []);
+  console.log("render CtrlInput outer");
+  return useMemo(() => {
+    console.log("render CtrlInput Inner");
+    return (
+      <CardContainer>
+        <label>This is controlled input</label>
+        <br />
+        <Input onChange={(e) => updateName(e.target.value)} value={name} />
+      </CardContainer>
+    );
+  }, [name]);
+  // return (
+  //   <CardContainer>
+  //     <label>This is controlled input</label>
+  //     <br />
+  //     <Input onChange={(e) => updateName(e.target.value)} value={name} />
+  //   </CardContainer>
+  // );
+};
+
+const areEqual = (prevMovie, nextMovie) => {
+  console.log("prevMovie", prevMovie.name);
+  console.log("nextMovie", nextMovie.name);
+  if (prevMovie.name !== nextMovie.name) {
+    return false;
+  } else {
+    return true;
+  }
 };
 
 Shell.CtrlInput = CtrlInput;
 
-const CtrlInputOne = () => {
+const CtrlInputOne = (props) => {
   const { contextState, dispatch } = useContext(ShellContext);
-  const updateName = (data) => {
-    dispatch({
-      type: "update",
-      payload: {
-        field: "name1",
-        data
-      }
-    });
-  };
+  const updateName = useCallback(
+    (data) => {
+      dispatch({
+        type: "update",
+        payload: {
+          error: "",
+          field: "name1",
+          data
+        }
+      });
+    },
+    [contextState.name1]
+  );
+  console.log("render CtrlInputOne");
   return (
     <CardContainer>
       <label>This is controlled input</label>
@@ -119,6 +129,6 @@ const CtrlInputOne = () => {
   );
 };
 
-Shell.CtrlInputOne = CtrlInputOne;
+Shell.CtrlInputOne = React.memo(CtrlInputOne);
 
 export default Shell;
